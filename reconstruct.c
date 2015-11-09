@@ -2,69 +2,84 @@
 #include <stdlib.h>
 #include <math.h>
 #include "pgmio.h"
-
+#include "mpi.h"
 
 int main(int argc, char *argv[])
 {
+
+MPI_Init(NULL, NULL);
+int P, rank;
+MPI_Comm_size(MPI_COMM_WORLD, &P);
+MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
 int M = 192;
 int N = 128;
-int i,j,t;
-float buf[M][N];
-float old[M+2][N+2];
-float edge[M+2][N+2];
-float new[M+2][N+2];
-int limit;
-char output_file;
+float masterbuf[M][N];
 
-//limit = argv[1];
-//output_file= argv[2];
+if(rank==0){
+   pgmread("edge192x128.pgm", masterbuf, M, N);
+}
 
-pgmread("edge192x128.pgm", buf, M, N);
+int i,j,t,T;
+T=50000;
+int Mp, Np;
+Mp=M/P;
+Np=N;
+int product = Mp*Np;
+float buf[Mp][Np];
+float old[Mp+2][Np+2];
+float edge[Mp+2][Np+2];
+float new[Mp+2][Np+2];
 
-for(i=1; i<=M;i++){
-   for(j=1; j<=N;j++){
+
+MPI_Scatter(masterbuf, product, MPI_INT, buf, product, MPI_INT, 0, MPI_COMM_WORLD);
+
+for(i=1; i<=Mp;i++){
+   for(j=1; j<=Np;j++){
       edge[i][j] = buf[i-1][j-1];
    }
 }
-/*
-for(i=0; i<M+2; i++){
-   edge[i][0]=255;
-   edge[i][N+2]=255;
-   edge[0][i]=255;
-   edge[N][i]=255;
-}
-*/
-for(i=0; i<M+2;i++){
-   for(j=0; j<N+2;j++){
+
+
+
+for(i=0; i<Mp+2;i++){
+   for(j=0; j<Np+2;j++){
       old[i][j]=255;
    }
 }
 
 
-for(t=0; t<1;t++){
-   for(i=0; i<M;i++){
-      for(j=0;j<N;j++){
+for(t=0; t<T;t++){
+   for(i=0; i<Mp;i++){
+      for(j=0;j<Np;j++){
          new[i][j]= ((old[i-1][j] + old[i+1][j] +old[i][j-1] + \
           old[i][j+1]- edge[i][j])/4.0) ;
           }
     }
     
 
-   for(i=1; i<M+2;i++){
-      for(j=1; j<N+2;j++){
+   for(i=1; i<Mp+2;i++){
+      for(j=1; j<Np+2;j++){
          old[i][j]=new[i][j];
       }
    }    
 
 }
 
-   for(i=1; i<=M;i++){
-      for(j=1; j<=N;j++){
+   for(i=1; i<=Mp;i++){
+      for(j=1; j<=Np;j++){
          buf[i-1][j-1]=old[i][j];
       }
    }    
 
-pgmwrite("output.png", edge,M+2, N+2);
+MPI_Barrier(MPI_COMM_WORLD);
+
+if(rank==0){
+   MPI_Gather(buf, product, MPI_INT, masterbuf, product, MPI_INT, 0, MPI_COMM_WORLD);
+   pgmwrite("output.png", masterbuf,M, N);
+}
+
+MPI_Finalize;
 
 return 0;
 }

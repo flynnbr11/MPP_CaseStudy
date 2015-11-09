@@ -1,4 +1,4 @@
-CC=mpicc
+CC=mpiexec
 LIB=-lm
 
 OBJ=reconstruct.o pgmio.o
