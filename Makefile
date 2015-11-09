@@ -2,15 +2,30 @@ CC=mpicc
 LIB=-lm
 
 OBJ=reconstruct.o pgmio.o
+FILES=reconstruct.c pgmio.c
+SERIAL=serial.o pgmio.o
 
-reconstruct: $(OBJ)
-	$(CC) -o $(OBJ) $(LIB)
+.PHONY : serial
+serial : $(SERIAL)
+	$(CC) $^ -o $@
 	
-.c.o:
+.PHONY : explicit_c
+explicit_c: $(OBJ)
+	$(CC) $(FILES) $(LIB) -o $@
+
+
+.c.o: 
 	$(CC) -c $<
+
+.PHONY : reconstruct
+reconstruct: $(OBJ)
+	$(CC) $(OBJ) $(LIB) -o $@
 	
+.PHONY : clean	
 clean:
-	rm *.o reconstruct
-	
+	rm *.o 
+	rm reconstruct
+	rm serial 
+	rm *~
 	
 	
