@@ -66,7 +66,6 @@ for(t=0; t<T;t++){
          old[i][j]=new[i][j];
       }
    }    
-
 }
 
    for(i=1; i<=Mp;i++){
@@ -90,6 +89,7 @@ if(rank==0){
    time_taken = end_timer - begin_timer;
    printf("Total time taken : %f \n", time_taken);
 }
+MPI_Barrier(MPI_COMM_WORLD);
 
 MPI_Finalize;
 printf("At end \n");
