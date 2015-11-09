@@ -13,7 +13,7 @@ double end_timer, time_taken;
 int P, rank;
 MPI_Comm_size(MPI_COMM_WORLD, &P);
 MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-printf("There are %d processors, this is rank %d \n", P, rank);
+//printf("There are %d processors, this is rank %d \n", P, rank);
 
 int M = 192;
 int N = 128;
@@ -25,7 +25,7 @@ if(rank==0){
 }
 
 int i,j,t,T;
-T=200;
+T=atoi(argv[1]);
 int Mp, Np;
 Mp=M/P;
 Np=N;
@@ -82,17 +82,18 @@ MPI_Gather(buf, product, MPI_INT, masterbuf, product, MPI_INT, 0, MPI_COMM_WORLD
 MPI_Barrier(MPI_COMM_WORLD);
 
 if(rank==0){
-   pgmwrite("output_parallel.png", masterbuf,M, N);
+//   pgmwrite("output_parallel.png", masterbuf,M, N);
+   pgmwrite(argv[2], masterbuf,M, N);
 
-   printf("After printing image \n");
+//   printf("After printing image \n");
    end_timer = MPI_Wtime();
    time_taken = end_timer - begin_timer;
-   printf("Total time taken : %f \n", time_taken);
+   printf("%f", time_taken);
 }
 MPI_Barrier(MPI_COMM_WORLD);
 
 MPI_Finalize;
-printf("At end \n");
+//printf("At end \n");
 
 return 0;
 }
