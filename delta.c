@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 	int M = 192;
 	int N = 128;
 	int i,j,t,T; // loop variables
+	int freq=100;
 	int Mp, Np; // subset of M, N depending on number of processors
 	MPI_Comm_size(MPI_COMM_WORLD, &P); // assign P as total num processors
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // rank of current processor = rank
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 //   	while(max_change > threshold) { 
          current_max=0;
 		   //halo swaps
-	      printf("on iteration %d  and max_change = %f \n", t, max_change);
+	//      printf("on iteration %d  and max_change = %f \n", t, max_change);
 		   MPI_Isend(&old[Mp][1], N, MPI_FLOAT, right_neighbour, 0, MPI_COMM_WORLD, &request[0]);
 		   MPI_Irecv(&old[0][1], N, MPI_FLOAT, left_neighbour, 0, MPI_COMM_WORLD, &request[1]);
 		   MPI_Isend(&old[1][1], N, MPI_FLOAT, left_neighbour, 0, MPI_COMM_WORLD, &request[2]);
@@ -91,18 +92,22 @@ int main(int argc, char *argv[])
 
 		   for(i=1; i<=Mp;i++){
 		      for(j=1; j<=Np;j++){
-               delta = new[i][j] - old[i][j];
-               
-               if(delta > current_max) current_max = delta;
+               if(t%freq==0) {
+                  delta = new[i][j] - old[i][j];
+                  if(delta > current_max) current_max = delta;
+	            }
 		         old[i][j]=new[i][j];
 		      }
 		   }   
 		
 		MPI_Reduce(&current_max, &max_change, 1, MPI_FLOAT, MPI_MAX, rank, MPI_COMM_WORLD);    
-	   if(max_change < threshold) {
-	      printf("Ran %d iterations. \n", t);
-	      break;
+	   if(t%freq==0) { 
+	      if(max_change < threshold) {
+	         printf("Ran %d iterations. \n", t);
+	         break;
+         }
       }
+
 	//  }
    }
 		for(i=1; i<=Mp;i++){
